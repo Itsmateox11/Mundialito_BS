@@ -1,0 +1,193 @@
+/* ============================================================
+   Estilos exclusivos del home (app/page.tsx).
+   ============================================================ */
+
+.font-hero {
+  font-family: var(--font-hero), var(--font-display, system-ui), sans-serif;
+}
+
+/* Banner de Estado del Torneo */
+.status-banner {
+  background: linear-gradient(90deg, #0B2545 0%, #1B4F8F 50%, #C8102E 100%);
+  background-size: 200% 100%;
+  animation: bannerGlow 8s ease infinite;
+}
+@keyframes bannerGlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Título animado */
+.word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(46px) rotate(3deg);
+  transform-origin: left bottom;
+  animation: rise 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes rise {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.text-flow {
+  background: linear-gradient(90deg, #c8102e, #ff5a73, #f5b700, #c8102e);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation:
+    rise 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
+    flow 6s linear infinite;
+}
+@keyframes flow {
+  to { background-position: 250% 0; }
+}
+
+/* Manchas animadas de fondo */
+.blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(85px);
+  opacity: 0.35;
+  pointer-events: none;
+  animation: blob 18s ease-in-out infinite;
+}
+@keyframes blob {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(50px, -40px, 0) scale(1.15); }
+  66% { transform: translate3d(-40px, 40px, 0) scale(0.92); }
+}
+
+/* Objetos flotantes */
+.bob {
+  animation: bob var(--dur, 6s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-18px) rotate(7deg); }
+}
+
+/* CONTENEDOR DE ÓRBITA CON PERSPECTIVA TRIDIMENSIONAL INCLINADA DIAGONAL */
+.orbit-perspective-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  perspective: 1000px;
+}
+
+/* ANIMACIÓN GIRO 3D CONTINUO SOBRE EJE VERTICAL (Y) */
+.spin-y-slow {
+  animation: spinY 12s linear infinite;
+  transform-style: preserve-3d;
+}
+@keyframes spinY {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(-360deg);
+  }
+}
+
+/* BOTONES MAGNÉTICOS CON RESPLANDOR Y DESTELLO */
+.magnetic {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
+  will-change: transform;
+}
+
+.magnetic::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 70%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  transform: skewX(-22deg);
+  pointer-events: none;
+}
+.magnetic:hover::after {
+  animation: buttonShine 1.1s ease-in-out infinite;
+}
+@keyframes buttonShine {
+  0% { left: -120%; }
+  100% { left: 180%; }
+}
+
+/* TARJETAS CON BORDE NEÓN EN HOVER */
+.tilt {
+  --glare: rgba(255, 255, 255, 0.28);
+  position: relative;
+  overflow: hidden;
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.2s ease-out, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* Efectos de neón por color en Hover */
+.neon-hover-red:hover {
+  box-shadow: 0 0 25px rgba(200, 16, 46, 0.65), inset 0 0 15px rgba(200, 16, 46, 0.3);
+  border-color: rgba(255, 90, 115, 0.9) !important;
+}
+.neon-hover-orange:hover {
+  box-shadow: 0 0 25px rgba(230, 81, 0, 0.65), inset 0 0 15px rgba(230, 81, 0, 0.3);
+  border-color: rgba(255, 152, 0, 0.9) !important;
+}
+.neon-hover-blue:hover {
+  box-shadow: 0 0 25px rgba(27, 79, 143, 0.65), inset 0 0 15px rgba(27, 79, 143, 0.3);
+  border-color: rgba(64, 153, 255, 0.9) !important;
+}
+.neon-hover-green:hover {
+  box-shadow: 0 0 25px rgba(27, 94, 32, 0.65), inset 0 0 15px rgba(27, 94, 32, 0.3);
+  border-color: rgba(76, 175, 80, 0.9) !important;
+}
+.neon-hover-gray:hover {
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.45), inset 0 0 15px rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.9) !important;
+}
+.neon-hover-purple:hover {
+  box-shadow: 0 0 25px rgba(123, 63, 228, 0.65), inset 0 0 15px rgba(123, 63, 228, 0.3);
+  border-color: rgba(171, 71, 188, 0.9) !important;
+}
+
+/* Cintas deportivas infinitas */
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 26s linear infinite;
+}
+.marquee-rev {
+  animation-direction: reverse;
+}
+.marquee-wrap:hover .marquee {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Animación de Scroll Bidireccional */
+.reveal {
+  opacity: 0;
+  transform: translateY(38px) scale(0.96);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.reveal-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}

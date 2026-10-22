@@ -1,0 +1,389 @@
+// Mundialito BS — esquema de la plataforma deportiva del IEBS.
+//
+// SQLite no tiene enums ni arrays: los estados viajan como texto con
+// constantes en `lib/domain.ts`, y las listas como JSON en una columna
+// de texto. Todo lo demás es relacional de verdad.
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ── Identidad ───────────────────────────────────────────────────────
+
+model User {
+  id    String  @id @default(cuid())
+  email String  @unique
+  name  String
+  role  String // ESTUDIANTE · DOCENTE · INVITADO
+  grade String?
+
+  // Nulo para el invitado: esa cuenta no se autentica con contraseña.
+  passwordHash String?
+
+  // Ficha institucional
+  document      String?
+  birthDate     DateTime?
+  guardianName  String?
+  guardianPhone String?
+  shift         String?
+  homeroom      String?
+
+  // Anamnesis
+  insurer            String?
+  bloodType          String?
+  allergies          String?
+  injuries           String?
+  medications        String?
+  emergencyPhone     String?
+  anamnesisUpdatedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions       Session[]
+  enrollments    Enrollment[]
+  player         Player?
+  decisionsMade  Enrollment[] @relation("EnrollmentDecider")
+  semilleroEnrollments SemilleroEnrollment[]
+
+  @@index([role])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ── Torneo ──────────────────────────────────────────────────────────
+
+model Sport {
+  id          String @id @default(cuid())
+  slug        String @unique
+  name        String
+  color       String
+  coach       String
+  schedule    String
+  venue       String
+  category    String
+  tagline     String
+  description String
+  capacity    Int
+  // Lista de requisitos serializada como JSON.
+  requirements String
+  position     Int
+
+  teams       Team[]
+  matches     Match[]
+  enrollments Enrollment[]
+  semilleros  Semillero[]
+
+  @@index([position])
+}
+
+// Salón del colegio y el país que representa en el Mundialito.
+//
+// El salón ya vivía repartido por la base como texto —`User.grade` guarda
+// "10-B" y los equipos se llaman "10-B Rojos"—, pero no como entidad. Aquí
+// pasa a serlo, con una sola fila por salón, para que el país no haya que
+// repetirlo en cada equipo: un mismo curso compite en varias disciplinas y
+// representa al mismo país en todas ellas.
+//
+// `countryCode` es ISO 3166-1 alfa-2 en mayúsculas. La bandera se deriva de
+// ese código, así que no se guarda ninguna imagen ni hace falta ninguna
+// librería.
+model Classroom {
+  id String @id @default(cuid())
+
+  // Tal y como lo escribe `User.grade`: "10-B".
+  name        String @unique
+  countryName String
+  countryCode String
+
+  teams Team[]
+}
+
+model Team {
+  id      String @id @default(cuid())
+  name    String
+  color   String
+  sportId String
+  sport   Sport  @relation(fields: [sportId], references: [id], onDelete: Cascade)
+
+  played       Int @default(0)
+  won          Int @default(0)
+  drawn        Int @default(0)
+  lost         Int @default(0)
+  goalsFor     Int @default(0)
+  goalsAgainst Int @default(0)
+
+  // Racha reciente, del partido más antiguo al más nuevo: "GGGEG".
+  form String @default("")
+
+  // Dibujo táctico elegido para la alineación: "1-2-1", "2-2"… Es una etiqueta
+  // para el docente; las posiciones reales viven en cada jugador.
+  formation String?
+
+  // Salón al que representa. Opcional: hay equipos que no salen de un curso
+  // (la selección de ajedrez, el grupo de iniciación de ping pong).
+  classroomId String?
+  classroom   Classroom? @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+
+  players     Player[]
+  homeMatches Match[]      @relation("HomeTeam")
+  awayMatches Match[]      @relation("AwayTeam")
+  events      MatchEvent[]
+
+  @@unique([sportId, name])
+  @@index([sportId])
+  @@index([classroomId])
+}
+
+model Player {
+  id       String @id @default(cuid())
+  number   String
+  name     String
+  position String
+
+  // Estadísticas individuales. Son números, no texto: de aquí sale la tabla
+  // de goleadores y el docente las edita desde su panel.
+  goals       Int @default(0)
+  assists     Int @default(0)
+  cleanSheets Int @default(0)
+
+  // Dónde se coloca en el campo, en porcentaje del ancho y del alto de la
+  // cancha (0-100). Nulo mientras no se le haya dado sitio: el jugador existe
+  // y cuenta para la plantilla, simplemente todavía está en el banquillo.
+  //
+  // Se guarda en porcentaje y no en píxeles para que la misma alineación valga
+  // en el móvil y en el escritorio, y para que cambiar el dibujo de la cancha
+  // no mueva a nadie.
+  fieldX Float?
+  fieldY Float?
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  // Un jugador puede estar ligado a la cuenta del estudiante.
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  events MatchEvent[]
+  news   News[]
+
+  @@index([teamId])
+}
+
+model Match {
+  id       String   @id @default(cuid())
+  sportId  String
+  sport    Sport    @relation(fields: [sportId], references: [id], onDelete: Cascade)
+  kickoff  DateTime
+  venue    String
+  round    String?
+
+  // Las etiquetas cubren lo que no es un enfrentamiento entre equipos
+  // (una ronda de ajedrez, una sesión técnica de tenis).
+  homeLabel String
+  awayLabel String
+
+  homeTeamId String?
+  homeTeam   Team?   @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: SetNull)
+  awayTeamId String?
+  awayTeam   Team?   @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: SetNull)
+
+  homeScore Int?
+  awayScore Int?
+  // Resultado no numérico, p. ej. "16 mesas" en ajedrez.
+  scoreNote String?
+
+  // Arbitraje del encuentro. El valor va en pesos colombianos enteros: el
+  // peso no usa céntimos, y guardarlo como número —nunca como texto con
+  // formato— permite sumarlo en la base. No interviene en la clasificación.
+  refereeName String?
+  refereeFee  Int?
+  refereePaid Boolean @default(false)
+
+  events MatchEvent[]
+  news   News[]
+
+  @@index([sportId, kickoff])
+}
+
+// Lo que pasa dentro de un partido: goles y tarjetas.
+//
+// Una fila por acontecimiento, con sus tres relaciones reales —partido,
+// equipo y jugador— en vez de texto libre o JSON. El gol es el único que
+// mueve una estadística (`Player.goals`, de donde sale la tabla de
+// goleadores); las tarjetas son registro disciplinario del partido.
+//
+// El tipo viaja como texto porque SQLite no tiene enums; sus constantes están
+// en `lib/domain.ts`, junto a las de los estados de inscripción.
+model MatchEvent {
+  id String @id @default(cuid())
+
+  matchId String
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  // El equipo se guarda además del jugador: deja comprobar de un vistazo que
+  // el gol se apuntó al lado correcto del marcador sin recorrer la plantilla.
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  // GOL · AMARILLA · ROJA
+  type String
+
+  createdAt DateTime @default(now())
+
+  @@index([matchId])
+  @@index([playerId])
+  @@index([teamId])
+}
+
+model News {
+  id          String   @id @default(cuid())
+  category    String // NOTICIAS · EVENTOS · COMUNICADOS · RESULTADOS
+  title       String
+  body        String
+  publishedAt DateTime
+
+  // Qué clase de anuncio es: ANUNCIO · PROXIMO_PARTIDO · RECONOCIMIENTO.
+  // Los ya publicados quedan como ANUNCIO, que es lo que eran.
+  type String @default("ANUNCIO")
+
+  // El anuncio apunta al partido o al jugador; no copia sus datos. Si el
+  // docente cambia la hora o la cancha, el anuncio dice la hora nueva sin
+  // tocarlo. Y si el partido o el jugador desaparecen, la referencia queda en
+  // nulo y la tarjeta se degrada a un anuncio normal en vez de romperse.
+  matchId String?
+  match   Match?  @relation(fields: [matchId], references: [id], onDelete: SetNull)
+
+  playerId String?
+  player   Player? @relation(fields: [playerId], references: [id], onDelete: SetNull)
+
+  @@index([publishedAt])
+  @@index([type])
+}
+
+model Enrollment {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sportId String
+  sport   Sport  @relation(fields: [sportId], references: [id], onDelete: Cascade)
+
+  status String // PENDIENTE · EN_REVISION · ANAMNESIS_INCOMPLETA · APROBADA · RECHAZADA
+
+  // Información deportiva declarada en el wizard
+  position        String?
+  yearsPracticing Int?
+  previousTeam    String?
+  shirtSize       String?
+  availability    String?
+
+  createdAt   DateTime  @default(now())
+  decidedAt   DateTime?
+  decidedById String?
+  decidedBy   User?     @relation("EnrollmentDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+
+  @@unique([userId, sportId])
+  @@index([status])
+  @@index([sportId, status])
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  initials  String
+  text      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ── Semilleros INDER ────────────────────────────────────────────────
+//
+// Formación deportiva en articulación con el INDER. Es un sistema aparte de
+// las inscripciones del Mundialito: participar aquí no toca la inscripción
+// del torneo, y elegir "Ninguno" en el registro del Mundialito no impide
+// inscribirse en un semillero.
+//
+// `sportId` es opcional: cuando la actividad coincide con un deporte del
+// catálogo se reutiliza (su nombre y color), pero el semillero nunca entra
+// al catálogo oficial del Mundialito. Los horarios viven en filas propias,
+// así un semillero puede tener varios días sin duplicarse.
+
+model Semillero {
+  id          String  @id @default(cuid())
+  name        String
+  description String
+  coach       String?
+  venue       String?
+
+  // Deporte del catálogo del Mundialito, solo como referencia visual.
+  sportId String?
+  sport   Sport?  @relation(fields: [sportId], references: [id], onDelete: SetNull)
+
+  color String @default("#0B2545")
+
+  // Cupo máximo. Nulo = el semillero no maneja cupos.
+  capacity Int?
+
+  // ¿Se pueden crear inscripciones nuevas ahora mismo?
+  openEnrollment Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  horarios    SemilleroHorario[]
+  enrollments SemilleroEnrollment[]
+}
+
+// Cada fila es un bloque de horario: "Martes", "15:00", "17:00". Varios
+// bloques por semillero; el lugar puede matizarse por bloque o heredarse
+// del semillero. Las horas viajan como texto "HH:mm" porque SQLite no
+// tiene tipo de hora.
+model SemilleroHorario {
+  id          String @id @default(cuid())
+  semilleroId String
+  semillero   Semillero @relation(fields: [semilleroId], references: [id], onDelete: Cascade)
+
+  day       String // Lunes…Domingo, constantes en lib/domain.ts
+  startTime String
+  endTime   String
+  venue     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([semilleroId])
+}
+
+// La participación de un estudiante en un semillero. Una sola fila por
+// estudiante y semillero: duplicarla lo impide la restricción única.
+model SemilleroEnrollment {
+  id          String @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  semilleroId String
+  semillero   Semillero @relation(fields: [semilleroId], references: [id], onDelete: Cascade)
+
+  status String // INSCRITO · CANCELADO
+
+  createdAt  DateTime  @default(now())
+  canceledAt DateTime?
+
+  @@unique([userId, semilleroId])
+  @@index([semilleroId, status])
+}
