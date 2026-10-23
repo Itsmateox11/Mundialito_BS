@@ -29,20 +29,12 @@ import {
 } from "@/lib/credentials";
 import { cn } from "@/lib/utils";
 
-/**
- * El icono es lo único de cada ventana que vive aquí: el resto —qué rol
- * admite, qué cuenta demo ofrece, qué dice— sale de `lib/credentials`, que es
- * el mismo módulo que usa el servidor para comprobarlo. Si la pestaña y la
- * comprobación vivieran en sitios distintos, tarde o temprano dejarían de
- * decir lo mismo.
- */
 const ICONS: Record<LoginMode, LucideIcon> = {
   estudiante: GraduationCap,
   docente: ShieldCheck,
   invitado: UserRound,
 };
 
-/** Credenciales de arranque: en blanco salvo que la demostración esté activa. */
 function demoFor(mode: LoginMode) {
   if (!demoAutofill || mode === "invitado") return { email: "", password: "" };
   return { email: loginWindow(mode).demoEmail, password: DEMO_PASSWORD };
@@ -51,10 +43,6 @@ function demoFor(mode: LoginMode) {
 export function LoginForm({
   onSwitch,
 }: {
-  /**
-   * Cómo pasar al registro sin salir de la tarjeta. El enlace conserva su
-   * dirección para quien llega sin JavaScript o abre en otra pestaña.
-   */
   onSwitch?: () => void;
 }) {
   const router = useRouter();
@@ -81,7 +69,6 @@ export function LoginForm({
     return null;
   }, [email, touchedEmail]);
 
-  /** Propuesta de corrección: conserva el usuario y cambia el dominio. */
   const suggestion = useMemo(() => {
     if (emailProblem !== "missing-domain" && emailProblem !== "wrong-domain") {
       return null;
@@ -105,16 +92,13 @@ export function LoginForm({
   const fail = (message: string) => {
     setError(message);
     setTouchedEmail(true);
-    // Reinicia la animación de sacudida aunque el error se repita.
     errorRef.current?.classList.remove("anim-shake");
     void errorRef.current?.offsetWidth;
     errorRef.current?.classList.add("anim-shake");
   };
 
-  /** El destino lo manda el servidor según el rol guardado en la base. */
   const finish = (destination: string) => {
     setSuccess(true);
-    // Deja ver la confirmación antes de saltar al panel.
     setTimeout(() => {
       router.push(destination);
       router.refresh();
@@ -127,7 +111,6 @@ export function LoginForm({
 
     startTransition(async () => {
       const expectedRole = activeWindow.role;
-
       const result =
         expectedRole === null
           ? await loginAsGuest()
@@ -144,7 +127,7 @@ export function LoginForm({
   };
 
   return (
-    <form onSubmit={submit} className="mx-auto w-full max-w-[440px]" noValidate>
+    <form onSubmit={submit} className="flex w-full flex-col" noValidate>
       {success ? (
         <AuthSuccess
           title={mode === "invitado" ? "Entrando como invitado" : "¡Bienvenido!"}
@@ -152,15 +135,17 @@ export function LoginForm({
         />
       ) : null}
 
-      <h1 className="font-display text-[clamp(2rem,6vw,2.875rem)] font-black leading-none tracking-display-tight text-navy">
-        Ingreso institucional
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-[clamp(1.85rem,5vw,2.5rem)] font-black leading-none tracking-tight text-navy">
+          Ingreso institucional
+        </h1>
+      </div>
 
-      {/* Selector de rol: cambia el formulario, no solo el texto. */}
+      {/* SELECTOR DE ROL ESTILO PÍLDORA (SEGMENTED CONTROL) */}
       <div
         role="radiogroup"
         aria-label="Tipo de acceso"
-        className="mt-6 grid grid-cols-3 gap-2 rounded-field border border-hairline bg-white p-1"
+        className="mt-5 grid grid-cols-3 gap-1 rounded-xl bg-gray-100/70 p-1.5"
       >
         {LOGIN_WINDOWS.map((option) => {
           const selected = mode === option.id;
@@ -173,10 +158,10 @@ export function LoginForm({
               aria-checked={selected}
               onClick={() => pickMode(option.id)}
               className={cn(
-                "flex items-center justify-center gap-1.5 rounded-[7px] px-2 py-2.5 text-[13px] font-semibold transition-all",
+                "flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[12.5px] font-bold transition-all duration-200",
                 selected
-                  ? "bg-navy text-white shadow-[0_10px_20px_-12px_rgba(11,37,69,.8)]"
-                  : "text-ink-muted hover:bg-[rgba(11,37,69,.04)] hover:text-navy",
+                  ? "bg-white text-navy shadow-sm ring-1 ring-black/5"
+                  : "text-gray-500 hover:bg-gray-200/50 hover:text-navy",
               )}
             >
               <Icon aria-hidden className="h-4 w-4" />
@@ -186,14 +171,15 @@ export function LoginForm({
         })}
       </div>
 
-      <p className="mt-3 min-h-[42px] text-[15px] text-ink-soft">
+      <p className="mt-3 min-h-[40px] text-[13.5px] text-gray-500">
         {activeWindow.hint}
       </p>
 
       {activeWindow.role !== null ? (
-        <div key={mode} className="anim-field-in mt-2 flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Correo institucional</Label>
+        <div key={mode} className="anim-field-in mt-2 flex flex-col gap-3.5">
+          {/* CORREO INSTITUCIONAL */}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="email" className="text-[13px]">Correo institucional</Label>
             <Input
               id="email"
               name="email"
@@ -211,8 +197,8 @@ export function LoginForm({
               aria-invalid={emailProblem ? true : undefined}
               aria-describedby={suggestion ? "email-suggestion" : undefined}
               className={cn(
-                emailProblem &&
-                  "border-red focus:shadow-[0_0_0_4px_rgba(200,16,46,.12)]",
+                "h-10 transition-all",
+                emailProblem && "border-red-500 focus:shadow-[0_0_0_4px_rgba(200,16,46,.12)]"
               )}
             />
 
@@ -224,7 +210,7 @@ export function LoginForm({
                   setEmail(suggestion);
                   setTouchedEmail(false);
                 }}
-                className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-red hover:text-red-dark"
+                className="flex w-fit items-center gap-1.5 text-[12px] font-semibold text-red-600 hover:text-red-800 mt-1"
               >
                 <ArrowRight aria-hidden className="h-3.5 w-3.5" />
                 Usar {suggestion}
@@ -232,8 +218,17 @@ export function LoginForm({
             ) : null}
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Contraseña</Label>
+          {/* CONTRASEÑA */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-[13px]">Contraseña</Label>
+              <Link 
+                href="/forgot-password" 
+                className="text-[12px] font-semibold text-red-600 transition hover:text-red-800 hover:underline"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
             <div className="relative">
               <Input
                 id="password"
@@ -245,59 +240,50 @@ export function LoginForm({
                   setPassword(e.target.value);
                   setError(null);
                 }}
-                onKeyUp={(e) =>
-                  setCapsLock(e.getModifierState?.("CapsLock") ?? false)
-                }
-                className="pr-12"
+                onKeyUp={(e) => setCapsLock(e.getModifierState?.("CapsLock") ?? false)}
+                className="h-10 pr-9"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                aria-label={
-                  showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-                }
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-ink-muted transition hover:bg-[rgba(11,37,69,.05)] hover:text-navy"
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 transition hover:bg-black/5 hover:text-gray-900"
               >
-                {showPassword ? (
-                  <EyeOff className="h-[18px] w-[18px]" />
-                ) : (
-                  <Eye className="h-[18px] w-[18px]" />
-                )}
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
 
             {capsLock ? (
-              <p className="flex items-center gap-1.5 text-[13px] font-medium text-state-warn">
+              <p className="mt-1 flex items-center gap-1.5 text-[12px] font-medium text-amber-600">
                 <AlertCircle aria-hidden className="h-3.5 w-3.5" />
-                Bloq Mayús está activado
+                Bloq Mayús activado
               </p>
             ) : null}
           </div>
         </div>
       ) : null}
 
+      {/* ÁREA DE ERRORES */}
       {error ? (
         <div
           ref={errorRef}
           role="alert"
-          className="anim-shake mt-4 flex items-start gap-2.5 rounded-field border border-[rgba(200,16,46,.3)] bg-[rgba(200,16,46,.06)] px-4 py-3"
+          className="anim-shake mt-4 flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-500/5 px-3.5 py-3"
         >
-          <AlertCircle
-            aria-hidden
-            className="mt-0.5 h-4 w-4 shrink-0 text-red"
-          />
-          <p className="text-sm font-medium text-red">{error}</p>
+          <AlertCircle aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <p className="text-[13px] font-medium text-red-500">{error}</p>
         </div>
       ) : null}
 
+      {/* BOTÓN SUBMIT */}
       <Button
         type="submit"
         disabled={pending}
-        className="mt-6 w-full py-4 text-base"
+        className="mt-6 w-full py-3.5 text-base font-bold shadow-md transition-all active:scale-[0.98]"
       >
         {pending ? (
           <>
-            <Loader2 aria-hidden className="h-5 w-5 animate-spin" />
+            <Loader2 aria-hidden className="mr-2 h-5 w-5 animate-spin" />
             Verificando…
           </>
         ) : activeWindow.role === null ? (
@@ -307,37 +293,25 @@ export function LoginForm({
         )}
       </Button>
 
-      <p className="mt-6 text-[13px] leading-relaxed text-ink-muted">
+      {/* MENSAJE DE DEMO / INFO */}
+      <p className="mt-5 text-[12.5px] leading-relaxed text-gray-400">
         {demoAutofill ? (
-          <>
-            Cuentas de demostración con la contraseña{" "}
-            <strong className="text-ink-soft">{DEMO_PASSWORD}</strong>. Las
-            credenciales se verifican contra la base de datos.
-          </>
+          <>Cuentas demo con clave <strong className="text-gray-600">{DEMO_PASSWORD}</strong>.</>
         ) : (
-          <>
-            Entra con tu correo institucional. Tras varios intentos fallidos el
-            acceso se bloquea unos minutos.
-          </>
+          <>Tras varios intentos fallidos el acceso se bloquea por seguridad.</>
         )}
       </p>
 
-      <p className="mt-4 text-center text-[13px] text-ink-muted">
-        ¿No tienes cuenta?{" "}
-        <Link
-          href="/register"
-          onClick={
-            onSwitch
-              ? (event) => {
-                  event.preventDefault();
-                  onSwitch();
-                }
-              : undefined
-          }
-          className="font-semibold text-red transition hover:text-red-dark"
+      {/* ALTERNAR A REGISTRO */}
+      <p className="mt-3 text-center text-[13px] text-gray-500">
+        ¿Aún no te has registrado?{" "}
+        <button
+          type="button"
+          onClick={onSwitch}
+          className="font-bold text-red-600 transition hover:underline"
         >
-          Regístrate
-        </Link>
+          Crea tu cuenta
+        </button>
       </p>
     </form>
   );
