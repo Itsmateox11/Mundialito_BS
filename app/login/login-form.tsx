@@ -10,7 +10,10 @@ import {
   EyeOff,
   GraduationCap,
   Loader2,
+  Lock,
+  Mail,
   ShieldCheck,
+  Sparkles,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
@@ -29,10 +32,32 @@ import {
 } from "@/lib/credentials";
 import { cn } from "@/lib/utils";
 
-const ICONS: Record<LoginMode, LucideIcon> = {
-  estudiante: GraduationCap,
-  docente: ShieldCheck,
-  invitado: UserRound,
+interface RoleMeta {
+  label: string;
+  icon: LucideIcon;
+  activeColor: string;
+  glowColor: string;
+}
+
+const ROLE_META: Record<LoginMode, RoleMeta> = {
+  estudiante: {
+    label: "Estudiante",
+    icon: GraduationCap,
+    activeColor: "text-red-600",
+    glowColor: "shadow-red-600/10",
+  },
+  docente: {
+    label: "Docente",
+    icon: ShieldCheck,
+    activeColor: "text-blue-600",
+    glowColor: "shadow-blue-600/10",
+  },
+  invitado: {
+    label: "Invitado",
+    icon: UserRound,
+    activeColor: "text-amber-600",
+    glowColor: "shadow-amber-600/10",
+  },
 };
 
 function demoFor(mode: LoginMode) {
@@ -40,11 +65,7 @@ function demoFor(mode: LoginMode) {
   return { email: loginWindow(mode).demoEmail, password: DEMO_PASSWORD };
 }
 
-export function LoginForm({
-  onSwitch,
-}: {
-  onSwitch?: () => void;
-}) {
+export function LoginForm({ onSwitch }: { onSwitch?: () => void }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -59,6 +80,9 @@ export function LoginForm({
 
   const errorRef = useRef<HTMLDivElement>(null);
   const activeWindow = loginWindow(mode);
+
+  // Índice para calcular el desplazamiento físico de la píldora flotante
+  const modeIndex = LOGIN_WINDOWS.findIndex((opt) => opt.id === mode);
 
   const emailProblem = useMemo(() => {
     if (!touchedEmail || !email.trim()) return null;
@@ -99,10 +123,11 @@ export function LoginForm({
 
   const finish = (destination: string) => {
     setSuccess(true);
+    // Permite desplegar la secuencia completa de la animación de carga antes de redireccionar
     setTimeout(() => {
       router.push(destination);
       router.refresh();
-    }, 850);
+    }, 2100);
   };
 
   const submit = (event: React.FormEvent) => {
@@ -127,29 +152,46 @@ export function LoginForm({
   };
 
   return (
-    <form onSubmit={submit} className="flex w-full flex-col" noValidate>
+    <form onSubmit={submit} className="mx-auto flex w-full max-w-[440px] flex-col" noValidate>
       {success ? (
         <AuthSuccess
-          title={mode === "invitado" ? "Entrando como invitado" : "¡Bienvenido!"}
-          description="Preparando tu panel del Mundialito BS…"
+          role={mode}
+          title={mode === "invitado" ? "¡Entrando como invitado!" : "¡Bienvenido de nuevo!"}
+          description="Sincronizando tu perfil institucional del Mundialito BS 2026…"
         />
       ) : null}
 
+      {/* INSIGNIA DEL EVENTO */}
+      <div className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-red-600/20 bg-red-600/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-red-600 backdrop-blur-sm">
+        <Sparkles className="h-3 w-3" />
+        Mundialito BS 2026
+      </div>
+
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-[clamp(1.85rem,5vw,2.5rem)] font-black leading-none tracking-tight text-navy">
+        <h1 className="font-display text-[clamp(1.85rem,5vw,2.35rem)] font-black leading-tight tracking-tight text-navy">
           Ingreso institucional
         </h1>
       </div>
 
-      {/* SELECTOR DE ROL ESTILO PÍLDORA (SEGMENTED CONTROL) */}
+      {/* SELECTOR DE ROL CON PÍLDORA DESLIZANTE FLUIDA */}
       <div
         role="radiogroup"
         aria-label="Tipo de acceso"
-        className="mt-5 grid grid-cols-3 gap-1 rounded-xl bg-gray-100/70 p-1.5"
+        className="relative mt-4 grid grid-cols-3 gap-1 rounded-2xl bg-slate-200/70 p-1.5 backdrop-blur-md border border-slate-300/50 shadow-inner"
       >
+        {/* Fondo blanco animado que se desplaza según la opción seleccionada */}
+        <div
+          className="absolute top-1.5 bottom-1.5 left-1.5 w-[calc((100%-12px)/3)] rounded-xl bg-white shadow-md transition-transform duration-300 ease-out"
+          style={{
+            transform: `translateX(calc(${modeIndex} * 100%))`,
+          }}
+        />
+
         {LOGIN_WINDOWS.map((option) => {
           const selected = mode === option.id;
-          const Icon = ICONS[option.id];
+          const meta = ROLE_META[option.id];
+          const Icon = meta.icon;
+
           return (
             <button
               key={option.id}
@@ -158,49 +200,62 @@ export function LoginForm({
               aria-checked={selected}
               onClick={() => pickMode(option.id)}
               className={cn(
-                "flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[12.5px] font-bold transition-all duration-200",
+                "relative z-10 flex items-center justify-center gap-2 rounded-xl px-2 py-2.5 text-[12.5px] font-bold transition-all duration-200 select-none",
                 selected
-                  ? "bg-white text-navy shadow-sm ring-1 ring-black/5"
-                  : "text-gray-500 hover:bg-gray-200/50 hover:text-navy",
+                  ? cn(meta.activeColor, "scale-[1.02]")
+                  : "text-slate-600 hover:text-navy"
               )}
             >
-              <Icon aria-hidden className="h-4 w-4" />
-              {option.label}
+              <Icon
+                className={cn(
+                  "h-4 w-4 shrink-0 transition-transform duration-200",
+                  selected && "scale-110"
+                )}
+              />
+              <span>{option.label}</span>
             </button>
           );
         })}
       </div>
 
-      <p className="mt-3 min-h-[40px] text-[13.5px] text-gray-500">
-        {activeWindow.hint}
-      </p>
+      {/* PISTA CONTEXTUAL CON ANIMACIÓN DE ENTRADA */}
+      <div key={mode} className="anim-field-in mt-3 min-h-[42px] rounded-xl bg-white/50 border border-slate-200/60 p-2.5 backdrop-blur-xs">
+        <p className="text-[13px] font-medium leading-relaxed text-slate-600">
+          {activeWindow.hint}
+        </p>
+      </div>
 
       {activeWindow.role !== null ? (
-        <div key={mode} className="anim-field-in mt-2 flex flex-col gap-3.5">
+        <div key={`fields-${mode}`} className="anim-field-in mt-4 flex flex-col gap-3.5">
           {/* CORREO INSTITUCIONAL */}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email" className="text-[13px]">Correo institucional</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              autoCapitalize="none"
-              spellCheck={false}
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setError(null);
-              }}
-              onBlur={() => setTouchedEmail(true)}
-              aria-invalid={emailProblem ? true : undefined}
-              aria-describedby={suggestion ? "email-suggestion" : undefined}
-              className={cn(
-                "h-10 transition-all",
-                emailProblem && "border-red-500 focus:shadow-[0_0_0_4px_rgba(200,16,46,.12)]"
-              )}
-            />
+            <Label htmlFor="email" className="text-[13px] font-semibold text-navy">
+              Correo institucional
+            </Label>
+            <div className="group relative flex items-center">
+              <Mail className="absolute left-3.5 h-4 w-4 text-slate-400 transition-colors group-focus-within:text-red-600 pointer-events-none" />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError(null);
+                }}
+                onBlur={() => setTouchedEmail(true)}
+                aria-invalid={emailProblem ? true : undefined}
+                aria-describedby={suggestion ? "email-suggestion" : undefined}
+                className={cn(
+                  "h-10 pl-10 bg-white/80 backdrop-blur-sm border-slate-300/80 focus:border-red-600 focus:ring-2 focus:ring-red-600/20 font-medium text-slate-800",
+                  emailProblem && "border-red-500 focus:ring-red-500/20"
+                )}
+              />
+            </div>
 
             {suggestion ? (
               <button
@@ -210,7 +265,7 @@ export function LoginForm({
                   setEmail(suggestion);
                   setTouchedEmail(false);
                 }}
-                className="flex w-fit items-center gap-1.5 text-[12px] font-semibold text-red-600 hover:text-red-800 mt-1"
+                className="flex w-fit items-center gap-1.5 text-[12.5px] font-bold text-red-600 hover:text-red-700 transition-colors mt-0.5"
               >
                 <ArrowRight aria-hidden className="h-3.5 w-3.5" />
                 Usar {suggestion}
@@ -221,15 +276,18 @@ export function LoginForm({
           {/* CONTRASEÑA */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-[13px]">Contraseña</Label>
-              <Link 
-                href="/forgot-password" 
-                className="text-[12px] font-semibold text-red-600 transition hover:text-red-800 hover:underline"
+              <Label htmlFor="password" className="text-[13px] font-semibold text-navy">
+                Contraseña
+              </Label>
+              <Link
+                href="/forgot-password"
+                className="text-[12px] font-bold text-red-600 transition hover:text-red-700 hover:underline"
               >
                 ¿Olvidaste tu contraseña?
               </Link>
             </div>
-            <div className="relative">
+            <div className="group relative flex items-center">
+              <Lock className="absolute left-3.5 h-4 w-4 text-slate-400 transition-colors group-focus-within:text-red-600 pointer-events-none" />
               <Input
                 id="password"
                 name="password"
@@ -241,45 +299,45 @@ export function LoginForm({
                   setError(null);
                 }}
                 onKeyUp={(e) => setCapsLock(e.getModifierState?.("CapsLock") ?? false)}
-                className="h-10 pr-9"
+                className="h-10 pl-10 pr-10 bg-white/80 backdrop-blur-sm border-slate-300/80 focus:border-red-600 focus:ring-2 focus:ring-red-600/20 font-medium text-slate-800"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 transition hover:bg-black/5 hover:text-gray-900"
+                className="absolute right-2.5 rounded-lg p-1.5 text-slate-400 hover:bg-black/5 hover:text-navy transition-colors"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
 
             {capsLock ? (
-              <p className="mt-1 flex items-center gap-1.5 text-[12px] font-medium text-amber-600">
+              <p className="flex items-center gap-1.5 text-[12px] font-semibold text-amber-600 mt-0.5">
                 <AlertCircle aria-hidden className="h-3.5 w-3.5" />
-                Bloq Mayús activado
+                Bloq Mayús está activado
               </p>
             ) : null}
           </div>
         </div>
       ) : null}
 
-      {/* ÁREA DE ERRORES */}
+      {/* ÁREA DE ERRORES CON ANIMACIÓN DE SACUDIDA */}
       {error ? (
         <div
           ref={errorRef}
           role="alert"
-          className="anim-shake mt-4 flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-500/5 px-3.5 py-3"
+          className="anim-shake mt-4 flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-3 shadow-sm backdrop-blur-md"
         >
-          <AlertCircle aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-          <p className="text-[13px] font-medium text-red-500">{error}</p>
+          <AlertCircle aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+          <p className="text-[13px] font-semibold text-red-700">{error}</p>
         </div>
       ) : null}
 
-      {/* BOTÓN SUBMIT */}
+      {/* BOTÓN DE ACCIÓN PRINCIPAL */}
       <Button
         type="submit"
         disabled={pending}
-        className="mt-6 w-full py-3.5 text-base font-bold shadow-md transition-all active:scale-[0.98]"
+        className="mt-6 w-full py-3.5 text-base font-bold bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/30 transition-all active:scale-[0.98]"
       >
         {pending ? (
           <>
@@ -293,22 +351,25 @@ export function LoginForm({
         )}
       </Button>
 
-      {/* MENSAJE DE DEMO / INFO */}
-      <p className="mt-5 text-[12.5px] leading-relaxed text-gray-400">
+      {/* INFORMACIÓN DE DEMO / NOTA */}
+      <p className="mt-4 text-[12.5px] font-medium leading-relaxed text-slate-500">
         {demoAutofill ? (
-          <>Cuentas demo con clave <strong className="text-gray-600">{DEMO_PASSWORD}</strong>.</>
+          <>
+            Cuentas demo activas con clave{" "}
+            <strong className="font-bold text-navy">{DEMO_PASSWORD}</strong>.
+          </>
         ) : (
           <>Tras varios intentos fallidos el acceso se bloquea por seguridad.</>
         )}
       </p>
 
-      {/* ALTERNAR A REGISTRO */}
-      <p className="mt-3 text-center text-[13px] text-gray-500">
+      {/* ENLACE DE NAVEGACIÓN A REGISTRO */}
+      <p className="mt-3 text-center text-[13px] font-medium text-slate-600">
         ¿Aún no te has registrado?{" "}
         <button
           type="button"
           onClick={onSwitch}
-          className="font-bold text-red-600 transition hover:underline"
+          className="font-bold text-red-600 transition hover:text-red-700 hover:underline"
         >
           Crea tu cuenta
         </button>

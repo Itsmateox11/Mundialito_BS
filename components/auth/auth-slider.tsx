@@ -17,37 +17,21 @@ import { cn } from "@/lib/utils";
 const LOGIN_PATH = "/login";
 const REGISTER_PATH = "/register";
 
-/** Lo que dice el panel rojo en cada lado: invita a lo contrario de lo que se ve. */
 const PANEL = {
   login: {
-    title: "Hola, Bienvenido",
-    body: "Regístrate para participar en los torneos y seguir a tus equipos favoritos.",
-    action: "Registrarse",
+    title: "¡Bienvenido de nuevo!",
+    body: "Ingresa con tu cuenta institucional para explorar estadísticas, torneos y posiciones.",
+    action: "Crear una cuenta",
     tab: "Ingreso institucional",
   },
   register: {
-    title: "¿Ya tienes cuenta?",
-    body: "Inicia sesión para acceder a tu perfil y gestionar tus inscripciones.",
+    title: "¿Ya formaste tu cuenta?",
+    body: "Inicia sesión para acceder a tu panel de usuario y gestionar tus solicitudes.",
     action: "Iniciar sesión",
     tab: "Registro institucional",
   },
 } as const;
 
-/**
- * Ingreso y registro en una sola tarjeta.
- *
- * Los dos formularios de siempre viven lado a lado en una banda del doble de
- * ancho; un panel rojo cubre el 40 % de la tarjeta y se desliza de un lado al
- * otro para descubrir uno u otro. No hay un estado propio para el modo: el
- * modo ES la dirección —/login o /register—, que se cambia con el historial
- * del navegador sin pasar por el servidor. Así las dos rutas siguen
- * existiendo para quien llega por enlace directo, «Atrás» deshace el cambio y
- * cada formulario conserva lo escrito al ir y volver.
- *
- * En pantallas estrechas el panel se convierte en la cabecera de la tarjeta y
- * solo existe el formulario activo: el deslizamiento horizontal ni cabe ni
- * convive bien con el teclado del móvil.
- */
 export function AuthSlider({ sports }: { sports: RegisterSportOption[] }) {
   const pathname = usePathname();
   const isRegister = pathname === REGISTER_PATH;
@@ -57,97 +41,96 @@ export function AuthSlider({ sports }: { sports: RegisterSportOption[] }) {
     window.history.pushState(null, "", isRegister ? LOGIN_PATH : REGISTER_PATH);
   };
 
-  // La mitad que sale de la tarjeta deja de existir para el teclado y el
-  // lector de pantalla, pero solo cuando ha terminado de irse: si se
-  // ocultara al instante, el deslizamiento se vería vacío. El plazo es el
-  // de la transición.
   const [settled, setSettled] = useState(true);
   useEffect(() => {
     setSettled(false);
-    const timer = window.setTimeout(() => setSettled(true), 700);
+    const timer = window.setTimeout(() => setSettled(true), 650);
     return () => window.clearTimeout(timer);
   }, [isRegister]);
 
-  // La dirección cambia sin tocar el servidor, así que el título de la
-  // pestaña se pone al día aquí.
   useEffect(() => {
     document.title = `${panel.tab} · ${siteName}`;
   }, [panel.tab]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-navy px-4 py-6 sm:px-6 sm:py-10 lg:flex lg:items-center lg:justify-center lg:px-10">
-      {/* El fondo del ingreso de siempre: resplandor rojo y trama sobre azul */}
+    <div className="relative min-h-screen overflow-hidden bg-[#070d19] px-4 py-6 sm:px-6 sm:py-10 lg:flex lg:items-center lg:justify-center lg:px-10">
+      {/* ───────────────────────────────────────────────────────────────
+          RESPLANDORES AMBIENTALES ORGÁNICOS (SIN CUADRÍCULAS NI RAYAS)
+         ─────────────────────────────────────────────────────────────── */}
       <div
         aria-hidden
-        className="absolute -inset-[20%] animate-pulseglow"
-        style={{
-          background:
-            "radial-gradient(45% 40% at 50% 40%, rgba(200,16,46,.5), transparent 70%)",
-        }}
+        className="ambient-glow-red pointer-events-none absolute -left-20 -top-20 h-[600px] w-[600px] rounded-full blur-[130px] opacity-70"
       />
-      <div aria-hidden className="absolute inset-0 bg-grid-navy opacity-10" />
+      <div
+        aria-hidden
+        className="ambient-glow-navy pointer-events-none absolute -bottom-20 -right-20 h-[650px] w-[650px] rounded-full blur-[140px] opacity-80"
+      />
 
+      {/* ───────────────────────────────────────────────────────────────
+          TARJETA CONTENEDORA GLASSMORPHISM
+         ─────────────────────────────────────────────────────────────── */}
       <section
         aria-label="Acceso al Mundialito BS"
-        className="relative mx-auto w-full max-w-[1080px] overflow-hidden rounded-[28px] bg-white shadow-frame lg:h-[min(90vh,860px)] lg:min-h-[600px]"
+        className="glass-card relative mx-auto w-full max-w-[1100px] overflow-hidden rounded-[32px] border border-white/50 shadow-[0_32px_64px_-16px_rgba(7,13,25,0.4)] lg:h-[min(88vh,840px)] lg:min-h-[620px]"
       >
         {/*
-          El panel institucional. En escritorio es la hoja que se desliza:
-          ocupa el 40 % y, según el lado en que se apoya, redondea la esquina
-          que da al formulario. En móvil es la cabecera de la tarjeta.
+          PANEL ROJO DESLIZANTE CON EFECTOS DE PROFUNDIDAD
         */}
         <aside
           className={cn(
-            "relative flex flex-col items-center overflow-hidden bg-gradient-to-br from-red to-red-dark px-6 pb-8 pt-14 text-center text-white",
+            "relative flex flex-col items-center overflow-hidden bg-gradient-to-br from-[#c8102e] via-[#a60b23] to-[#7a0618] px-6 pb-8 pt-14 text-center text-white shadow-2xl",
             "auth-slide-ease-radius lg:absolute lg:left-0 lg:top-0 lg:z-10 lg:h-full lg:w-[40%] lg:justify-center lg:px-10 lg:py-16",
             isRegister
-              ? "lg:translate-x-[150%] lg:rounded-l-[40px]"
-              : "lg:translate-x-0 lg:rounded-r-[40px]",
+              ? "lg:translate-x-[150%] lg:rounded-l-[44px]"
+              : "lg:translate-x-0 lg:rounded-r-[44px]",
           )}
         >
-          {/* La misma textura diagonal de las tarjetas de deporte, muy al fondo */}
+          {/* Luz difusa superior interna */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[inherit] bg-diagonals opacity-[.06]"
+            className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/15 blur-3xl"
           />
 
           <Link
             href="/"
-            className="absolute left-5 top-5 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[13px] font-semibold text-white/75 transition hover:text-white focus-visible:outline-white"
+            className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/15 px-3.5 py-1.5 text-[12.5px] font-medium text-white/90 backdrop-blur-md transition-all hover:border-white/40 hover:bg-black/25 hover:text-white"
           >
             <ArrowLeft aria-hidden className="h-4 w-4" />
-            Volver al inicio
+            Inicio
           </Link>
 
-          <EscudoOrbit tone="light" priority className="w-[104px] lg:w-[188px]" />
+          <div className="animate-floaty my-auto flex flex-col items-center">
+            <EscudoOrbit tone="light" priority className="w-[110px] drop-shadow-[0_12px_24px_rgba(0,0,0,0.3)] lg:w-[175px]" />
+          </div>
 
-          {/* La clave reinicia la entrada del texto al cambiar de lado */}
           <div
             key={panel.title}
-            className="anim-field-in relative mt-4 max-w-[300px] lg:mt-10"
+            className="anim-field-in relative z-10 max-w-[320px]"
           >
-            <h2 className="font-display text-[26px] font-black leading-none tracking-display-tight lg:text-[34px]">
+            <h2 className="font-display text-[26px] font-black leading-tight tracking-tight text-white lg:text-[32px]">
               {panel.title}
             </h2>
-            <p className="mt-3 text-[14px] leading-relaxed text-white/80 lg:text-[15px]">
+            <p className="mt-3 text-[14px] leading-relaxed text-white/85 lg:text-[14.5px]">
               {panel.body}
             </p>
             <button
               type="button"
               onClick={toggleMode}
-              className="relative mt-5 inline-flex items-center gap-2 rounded-full border-2 border-white/40 bg-white/10 px-6 py-2 text-[13px] font-bold backdrop-blur-sm transition-all hover:border-white/60 hover:bg-white/20 focus-visible:outline-white active:scale-95"
+              className="group relative mt-6 inline-flex items-center gap-2.5 rounded-full border border-white/40 bg-white/15 px-7 py-2.5 text-[13px] font-bold text-white shadow-lg backdrop-blur-md transition-all hover:border-white/80 hover:bg-white/25 active:scale-95"
             >
-              {panel.action}
-              <ArrowRight aria-hidden className="h-4 w-4" />
+              <span>{panel.action}</span>
+              <ArrowRight aria-hidden className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
             </button>
           </div>
 
-          <div className="absolute inset-x-0 bottom-7 hidden font-narrow text-[12px] uppercase tracking-crest text-white/50 lg:block">
+          <div className="absolute inset-x-0 bottom-6 hidden text-center font-narrow text-[11px] font-semibold uppercase tracking-[0.25em] text-white/50 lg:block">
             Libertad · Sabiduría · Solidaridad
           </div>
         </aside>
 
-        {/* Los dos formularios, en una banda del doble de ancho */}
+        {/*
+          BANDA DOBLE DE FORMULARIOS
+        */}
         <div
           className={cn(
             "auth-slide-ease flex w-full lg:absolute lg:left-0 lg:top-0 lg:h-full lg:w-[200%]",
@@ -166,16 +149,6 @@ export function AuthSlider({ sports }: { sports: RegisterSportOption[] }) {
   );
 }
 
-/**
- * Cada mitad de la banda.
- *
- * En escritorio ocupa el ancho entero de la tarjeta, y el formulario vive en
- * el 60 % que el panel deja libre, pegado a ese lado; si no cabe en alto, es
- * ese 60 % lo que se desplaza, con la barra a la vista y no detrás del panel.
- * `parked` es la mitad que ya salió del todo: sigue en la banda para el
- * próximo viaje, pero invisible y fuera del orden de tabulación. En móvil
- * solo existe la mitad activa, y entra con un fundido breve.
- */
 function AuthHalf({
   active,
   parked,
@@ -198,10 +171,10 @@ function AuthHalf({
         parked && "lg:invisible",
       )}
     >
-      <div className="flex w-full flex-col px-6 py-8 scrollbar-slim sm:px-10 lg:h-full lg:w-[60%] lg:overflow-y-auto lg:px-[60px] lg:py-12">
+      <div className="flex w-full flex-col px-6 py-8 scrollbar-slim sm:px-10 lg:h-full lg:w-[60%] lg:overflow-y-auto lg:px-14 lg:py-12">
         <div
           className={cn(
-            "w-full max-w-[440px] self-center lg:my-auto",
+            "w-full max-w-[420px] self-center lg:my-auto",
             side === "end" ? "lg:self-end" : "lg:self-start",
           )}
         >

@@ -32,13 +32,15 @@ export default async function DashboardPage() {
   const recentNews = news.slice(0, 3);
 
   return (
-    <>
+    <div className="animate-page-enter space-y-[18px]">
+      {/* TARJETAS DE ESTADÍSTICAS */}
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {stats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
         ))}
       </div>
 
+      {/* PRÓXIMO ENCUENTRO Y TABLA RÁPIDA */}
       <div className="grid gap-[18px] lg:grid-cols-[1.35fr_1fr]">
         {nextMatch ? (
           <CardNavy className="p-6 md:px-7 md:py-[26px]">
@@ -144,6 +146,7 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
+      {/* ANUNCIOS Y ACTIVIDAD RECIENTE */}
       <div className="grid gap-[18px] lg:grid-cols-2">
         <Card className="px-6 py-[22px]">
           <CardTitle>Anuncios recientes</CardTitle>
@@ -194,6 +197,6 @@ export default async function DashboardPage() {
           </div>
         </Card>
       </div>
-    </>
+    </div>
   );
 }

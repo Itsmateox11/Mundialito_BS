@@ -2,398 +2,222 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  html {
-    -webkit-text-size-adjust: 100%;
+@layer utilities {
+  /* Efecto Glassmorphism principal */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 25px 50px -12px rgba(11, 37, 69, 0.25);
   }
 
-  body {
-    @apply bg-cream text-ink font-sans antialiased;
+  /* Halos de luz ambientales */
+  .ambient-glow-red {
+    background: radial-gradient(circle, rgba(200, 16, 46, 0.35) 0%, rgba(200, 16, 46, 0) 70%);
   }
 
-  ::selection {
-    background: rgba(200, 16, 46, 0.15);
+  .ambient-glow-navy {
+    background: radial-gradient(circle, rgba(11, 37, 69, 0.45) 0%, rgba(11, 37, 69, 0) 70%);
   }
 
-  /* Foco visible y coherente con el rojo institucional. */
-  :focus-visible {
-    outline: 2px solid #c8102e;
-    outline-offset: 2px;
+  /* Flotación ambiental */
+  @keyframes floaty {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-8px) scale(1.02); }
   }
+
+  .animate-floaty {
+    animation: floaty 6s ease-in-out infinite;
+  }
+
+  @keyframes floatSlow {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(1deg); }
+  }
+
+  .animate-float-slow {
+    animation: floatSlow 6s ease-in-out infinite;
+  }
+
+  /* Selección deportiva: Onda de choque */
+  @keyframes shockwaveExpand {
+    0% {
+      transform: scale(0.85);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(1.45);
+      opacity: 0;
+    }
+  }
+
+  .animate-shockwave {
+    animation: shockwaveExpand 0.5s ease-out forwards;
+  }
+
+  /* Selección deportiva: Explosión de emojis */
+  @keyframes particlePop {
+    0% {
+      transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+      opacity: 1;
+    }
+    70% {
+      opacity: 0.9;
+    }
+    100% {
+      transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.3) rotate(var(--rot));
+      opacity: 0;
+    }
+  }
+
+  .animate-particle-pop {
+    animation: particlePop 0.65s cubic-bezier(0.17, 0.89, 0.32, 1.28) forwards;
+  }
+
+  /* Portal Holográfico AuthSuccess: Órbitas y Estadio */
+  @keyframes orbitClockwise {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  .animate-orbit-cw {
+    animation: orbitClockwise 12s linear infinite;
+  }
+
+  @keyframes orbitCounterClockwise {
+    from { transform: translate(-50%, -50%) rotate(360deg); }
+    to { transform: translate(-50%, -50%) rotate(0deg); }
+  }
+
+  .animate-orbit-ccw {
+    animation: orbitCounterClockwise 8s linear infinite;
+  }
+
+  @keyframes stadiumLight {
+    0%, 100% { opacity: 0.35; transform: scale(1) rotate(0deg); }
+    50% { opacity: 0.75; transform: scale(1.15) rotate(180deg); }
+  }
+
+  .animate-stadium-light {
+    animation: stadiumLight 10s ease-in-out infinite;
+  }
+
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+
+  .animate-scanline {
+    animation: scanline 2.5s ease-in-out infinite;
+  }
+
+  /* Animación del balón rebotando con efecto físico Squash & Stretch */
+  @keyframes sportsBounce {
+    0%, 100% {
+      transform: translateY(0) scaleY(0.8) scaleX(1.2);
+    }
+    15% {
+      transform: translateY(0) scaleY(1) scaleX(1);
+    }
+    50% {
+      transform: translateY(-85px) scaleY(1.06) scaleX(0.94);
+    }
+    85% {
+      transform: translateY(0) scaleY(1) scaleX(1);
+    }
+  }
+
+  /* Sombra reactiva bajo el balón */
+  @keyframes shadowPulse {
+    0%, 100% {
+      transform: scaleX(1.3) scaleY(1);
+      opacity: 0.65;
+    }
+    50% {
+      transform: scaleX(0.35) scaleY(0.4);
+      opacity: 0.15;
+    }
+  }
+
+  .animate-sports-bounce {
+    animation: sportsBounce 0.75s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95);
+  }
+
+  .animate-shadow-pulse {
+    animation: shadowPulse 0.75s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95);
+  }
+
+  /* Entrada cinematográfica de la página web al navegar post-login */
+  @keyframes pageEnter {
+    0% {
+      opacity: 0;
+      transform: scale(0.97) translateY(24px);
+      filter: blur(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes curtainReveal {
+    0% {
+      clip-path: circle(0% at 50% 50%);
+    }
+    100% {
+      clip-path: circle(150% at 50% 50%);
+    }
+  }
+
+  .animate-page-enter {
+    animation: pageEnter 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-curtain-reveal {
+    animation: curtainReveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
 }
 
-@layer components {
-  /* Cinta superior en versalitas — el "eyebrow" del sistema 1c. */
-  .eyebrow {
-    @apply font-narrow text-xs uppercase tracking-eyebrow;
-  }
-
-  /* Rejilla de líneas horizontales del héroe claro. */
-  .bg-ruled {
-    background-image: linear-gradient(rgba(11, 37, 69, 0.055) 1px, transparent 1px);
-    background-size: 100% 34px;
-  }
-
-  /* Rejilla cuadriculada sobre azul (panel del login). */
-  .bg-grid-navy {
-    background-image: linear-gradient(rgba(255, 255, 255, 0.6) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.6) 1px, transparent 1px);
-    background-size: 70px 70px;
-  }
-
-  /* Diagonales sobre las cabeceras de color de las tarjetas de deporte. */
-  .bg-diagonals {
-    background-image: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.9) 25%,
-      transparent 25%,
-      transparent 50%,
-      rgba(255, 255, 255, 0.9) 50%,
-      rgba(255, 255, 255, 0.9) 75%,
-      transparent 75%
-    );
-    background-size: 22px 22px;
-  }
-
-  .scrollbar-slim {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(11, 37, 69, 0.25) transparent;
-  }
-
-  .scrollbar-slim::-webkit-scrollbar {
-    height: 6px;
-    width: 6px;
-  }
-
-  .scrollbar-slim::-webkit-scrollbar-thumb {
-    background: rgba(11, 37, 69, 0.25);
-    border-radius: 999px;
-  }
+/* Transiciones ultradinámicas con bordes hiperredondeados y rebote de resorte */
+.auth-slide-ease {
+  transition: transform 0.9s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  will-change: transform;
 }
 
-/* ───────────────────────────────────────────────────────────────
-   Escenas deportivas
-   Cada disciplina tiene su propio gesto: el balón que rueda, el
-   tiro que entra al aro, el saque que cruza la red, el caballo que
-   salta en L. Todo es CSS sobre SVG: sin librerías ni JavaScript.
-   ─────────────────────────────────────────────────────────────── */
-
-/* Microfútbol · el balón cruza la cancha rodando sobre su eje. */
-@keyframes ballRoll {
-  0% {
-    transform: translateX(-40px) rotate(0deg);
-  }
-  100% {
-    transform: translateX(360px) rotate(900deg);
-  }
+.auth-slide-ease-radius {
+  transition: 
+    transform 0.9s cubic-bezier(0.68, -0.55, 0.265, 1.55),
+    border-radius 0.9s cubic-bezier(0.68, -0.55, 0.265, 1.55),
+    box-shadow 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, border-radius;
 }
 
-/* Baloncesto · parábola hacia el aro, en dos tramos para que suba y caiga. */
-@keyframes shotArc {
-  0% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0;
-  }
-  8% {
-    opacity: 1;
-  }
-  50% {
-    transform: translate(105px, -46px) scale(0.92);
-  }
-  78% {
-    transform: translate(186px, 6px) scale(0.86);
-    opacity: 1;
-  }
-  92% {
-    transform: translate(190px, 42px) scale(0.82);
-    opacity: 0.35;
-  }
-  100% {
-    transform: translate(190px, 54px) scale(0.8);
-    opacity: 0;
-  }
+/* Sacudida para errores de formulario */
+.anim-shake {
+  animation: shake 0.42s ease-in-out;
 }
 
-/* La red acusa el golpe justo cuando pasa el balón. */
-@keyframes netSwish {
-  0%,
-  70%,
-  100% {
-    transform: scaleY(1) skewX(0deg);
-  }
-  80% {
-    transform: scaleY(1.22) skewX(5deg);
-  }
-  88% {
-    transform: scaleY(1.1) skewX(-3deg);
-  }
-}
-
-/* Voleibol · saque que sobrevuela la red y vuelve. */
-@keyframes volleyArc {
-  0% {
-    transform: translate(0, 0);
-  }
-  45% {
-    transform: translate(140px, -58px);
-  }
-  50% {
-    transform: translate(156px, -60px);
-  }
-  95% {
-    transform: translate(296px, 4px);
-  }
-  100% {
-    transform: translate(300px, 6px);
-  }
-}
-
-/* Balón mano · disparo tenso y rasante a la portería. */
-@keyframes shootFlat {
-  0% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  70% {
-    transform: translate(196px, -14px) scale(0.88);
-    opacity: 1;
-  }
-  85% {
-    transform: translate(214px, -16px) scale(0.85);
-    opacity: 0;
-  }
-  100% {
-    transform: translate(214px, -16px) scale(0.85);
-    opacity: 0;
-  }
-}
-
-/* La malla de la portería vibra tras el impacto. */
-@keyframes goalShake {
-  0%,
-  68%,
-  100% {
-    transform: translateX(0);
-  }
-  74% {
-    transform: translateX(3px);
-  }
-  80% {
-    transform: translateX(-2px);
-  }
-  86% {
-    transform: translateX(1px);
-  }
-}
-
-/* Ajedrez · el caballo salta en L: primero dos casillas, luego una. */
-@keyframes knightHop {
-  0%,
-  12% {
-    transform: translate(0, 0);
-  }
-  26% {
-    transform: translate(0, -34px);
-  }
-  40%,
-  52% {
-    transform: translate(34px, -34px);
-  }
-  66% {
-    transform: translate(34px, 0);
-  }
-  80%,
-  100% {
-    transform: translate(0, 0);
-  }
-}
-
-/* Ping pong · peloteo corto y rápido: botes bajos a ambos lados de la red. */
-@keyframes pingRally {
-  0% {
-    transform: translate(0, 0);
-    animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
-  }
-  12% {
-    transform: translate(38px, 8px);
-    animation-timing-function: cubic-bezier(0, 0, 0.4, 1);
-  }
-  38% {
-    transform: translate(106px, -26px);
-    animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
-  }
-  56% {
-    transform: translate(174px, 8px);
-    animation-timing-function: cubic-bezier(0, 0, 0.4, 1);
-  }
-  74% {
-    transform: translate(222px, -14px);
-    animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
-  }
-  88% {
-    transform: translate(252px, 8px);
-    animation-timing-function: cubic-bezier(0, 0, 0.4, 1);
-  }
-  100% {
-    transform: translate(276px, -6px);
-  }
-}
-
-/* La raqueta acompaña el golpe al principio de cada peloteo. */
-@keyframes paddleSwing {
-  0%,
-  70%,
-  100% {
-    transform: rotate(-18deg);
-  }
-  6% {
-    transform: rotate(14deg);
-  }
-  16% {
-    transform: rotate(-22deg);
-  }
-}
-
-/* La sombra se aplasta y se aclara cuando el móvil sube. */
-@keyframes shadowTrack {
-  0%,
-  100% {
-    transform: scaleX(0.6);
-    opacity: 0.1;
-  }
-  22%,
-  60%,
-  88% {
-    transform: scaleX(1);
-    opacity: 0.32;
-  }
-}
-
-/* Destello que recorre la escena una vez por ciclo. */
-@keyframes sheen {
-  0% {
-    transform: translateX(-140%) skewX(-18deg);
-  }
-  55%,
-  100% {
-    transform: translateX(320%) skewX(-18deg);
-  }
-}
-
-.anim-ball-roll {
-  animation: ballRoll 3.4s linear infinite;
-}
-.anim-shot-arc {
-  animation: shotArc 3.2s ease-in-out infinite;
-}
-.anim-net-swish {
-  animation: netSwish 3.2s ease-out infinite;
-  transform-origin: top center;
-}
-.anim-volley-arc {
-  animation: volleyArc 3.6s ease-in-out infinite;
-}
-.anim-shoot-flat {
-  animation: shootFlat 2.8s ease-in infinite;
-}
-.anim-goal-shake {
-  animation: goalShake 2.8s ease-out infinite;
-}
-.anim-knight-hop {
-  animation: knightHop 4.2s cubic-bezier(0.34, 1.2, 0.64, 1) infinite;
-}
-.anim-ping-rally {
-  animation: pingRally 2.4s linear infinite;
-}
-.anim-paddle-swing {
-  animation: paddleSwing 2.4s ease-out infinite;
-  transform-box: fill-box;
-  transform-origin: 50% 85%;
-}
-.anim-shadow-track {
-  animation: shadowTrack 3.8s linear infinite;
-}
-.anim-sheen {
-  animation: sheen 6s ease-in-out infinite;
-}
-
-/* ───────────────────────────────────────────────────────────────
-   Ingreso
-   ─────────────────────────────────────────────────────────────── */
-
-/* El formulario niega el error con una sacudida breve. */
 @keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  15%,
-  45%,
-  75% {
-    transform: translateX(-6px);
-  }
-  30%,
-  60%,
-  90% {
-    transform: translateX(6px);
-  }
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
 }
 
-/* El visto de confirmación se dibuja solo. */
-@keyframes drawCheck {
-  from {
-    stroke-dashoffset: 32;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
+/* Transición de campos */
+.anim-field-in {
+  animation: fieldIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/*
- * Guardas para lo que se desplaza al pasar el cursor.
- *
- * Una tarjeta que se eleva 6 px al recibir el hover aleja su borde inferior
- * del puntero: si el puntero estaba justo ahí, deja de estar encima, la
- * tarjeta baja, vuelve a estar encima, sube… y tiembla sin parar. Mientras
- * dura el hover, un pseudoelemento invisible cubre la franja que el elemento
- * dejó libre, así el puntero sigue "dentro" y el estado no oscila. `--lift`
- * es lo que sube; `--shift`, lo que se corre hacia la derecha, y van en rem
- * porque así mide Tailwind sus translate.
- *
- * Un absoluto se mide desde la caja de relleno, no desde el borde: los 2 px
- * de más cubren la fila del borde, que es justo donde se posa el puntero.
- */
-.lift-guard,
-.shift-guard {
-  position: relative;
-}
-
-.lift-guard:hover::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  height: calc(var(--lift, 0.375rem) + 2px);
-}
-
-.shift-guard:hover::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 100%;
-  width: calc(var(--shift, 0.375rem) + 2px);
-}
-
-/* Los campos entran escalonados al cambiar de rol. */
 @keyframes fieldIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -401,60 +225,14 @@
   }
 }
 
-.anim-shake {
-  animation: shake 0.42s ease-in-out;
+/* Barra de desplazamiento interna */
+.scrollbar-slim::-webkit-scrollbar {
+  width: 5px;
 }
-.anim-draw-check {
-  stroke-dasharray: 32;
-  animation: drawCheck 0.5s ease-out 0.1s both;
+.scrollbar-slim::-webkit-scrollbar-thumb {
+  background: rgba(11, 37, 69, 0.15);
+  border-radius: 10px;
 }
-.anim-field-in {
-  animation: fieldIn 0.32s ease both;
-}
-
-/* ───────────────────────────────────────────────────────────────
-   Deslizador Ingreso ↔ Registro
-   ─────────────────────────────────────────────────────────────── */
-
-/* Los formularios y el panel viajan con la misma curva; el panel además
-   cambia de esquina redondeada según el lado en que se apoya. */
-.auth-slide-ease {
-  transition: transform 0.7s cubic-bezier(0.77, 0, 0.175, 1);
-}
-
-.auth-slide-ease-radius {
-  transition:
-    transform 0.7s cubic-bezier(0.77, 0, 0.175, 1),
-    border-radius 0.7s cubic-bezier(0.77, 0, 0.175, 1);
-}
-
-/* El aviso de éxito entra con un pequeño rebote. */
-@keyframes pop-in {
-  from {
-    opacity: 0;
-    transform: scale(0.7);
-  }
-  60% {
-    transform: scale(1.05);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-pop-in {
-  animation: pop-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* La profundidad es decorativa: quien pide menos movimiento la recibe quieta. */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+.scrollbar-slim::-webkit-scrollbar-thumb:hover {
+  background: rgba(11, 37, 69, 0.3);
 }

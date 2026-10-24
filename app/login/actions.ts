@@ -23,13 +23,10 @@ import {
 } from "@/lib/rate-limit";
 
 /**
- * De dónde viene la petición, para que el freno de intentos recaiga sobre
- * quien falla y no sobre la cuenta a la que apunta. Detrás de un proxy el
- * primer valor de `x-forwarded-for` es el cliente; en desarrollo no hay
- * ninguna de las dos cabeceras y todo el mundo comparte el mismo cubo.
+ * Obtiene la IP del cliente para aplicar el límite de intentos.
  */
-function clientOrigin() {
-  const head = headers();
+async function clientOrigin(): Promise<string> {
+  const head = await headers();
   const forwarded = head.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
   return head.get("x-real-ip") ?? "local";
@@ -48,9 +45,6 @@ export async function login(
   password: string,
   expectedRole: Role,
 ): Promise<AuthResult> {
-  // El rol llega del cliente, así que no se da por bueno: solo las ventanas
-  // que piden credenciales son válidas aquí. La del invitado tiene su propia
-  // puerta y ningún rol inventado abre ninguna.
   if (!isCredentialRole(expectedRole)) {
     return {
       ok: false,
@@ -62,28 +56,22 @@ export async function login(
   const shape = validateCredentials({ email, password });
   if (!shape.ok) return shape;
 
-  const key = attemptKey(email, clientOrigin());
+  const cleanEmail = email.trim().toLowerCase();
+  const origin = await clientOrigin();
+  const key = attemptKey(cleanEmail, origin);
 
-  // Consultar y reservar ocurren aquí, seguidos y sin ningún `await` entre
-  // medias. Es deliberado: si el intento se anotara después de verificar la
-  // contraseña, todas las peticiones que llegaran mientras la primera espera
-  // a la base leerían el mismo contador y pasarían juntas, y el límite no
-  // frenaría el único ataque que importa —muchos intentos a la vez—.
   const before = attemptStatus(key);
   if (before.locked) return tooManyAttempts(before);
 
   const status = registerFailure(key);
 
   const user = await prisma.user.findUnique({
-    where: { email: email.trim().toLowerCase() },
+    where: { email: cleanEmail },
   });
 
-  // Mismo mensaje para usuario inexistente y contraseña incorrecta: no
-  // conviene revelar qué correos están registrados.
   const reject = (): AuthResult => {
     const base = "Correo o contraseña incorrectos";
 
-    // Este intento fue el último: decirlo ya, y no en el siguiente.
     if (status.locked) {
       return {
         ok: false,
@@ -92,8 +80,6 @@ export async function login(
       };
     }
 
-    // Avisar del margen que queda evita que alguien se bloquee sin entender
-    // por qué, y no le sirve de nada a quien está probando al azar.
     return {
       ok: false,
       code: "credentials",
@@ -105,22 +91,20 @@ export async function login(
   };
 
   if (!user?.passwordHash) return reject();
-  if (!verifyPassword(password, user.passwordHash)) return reject();
 
-  // La contraseña era correcta: la racha deja de contar aunque lo que siga
-  // falle. Equivocarse de ventana es un despiste, no un intento de adivinar.
+  // Verificación asíncrona de la contraseña
+  const isPasswordValid = await verifyPassword(password, user.passwordHash);
+  if (!isPasswordValid) return reject();
+
   clearAttempts(key);
 
-  // La jerarquía se decide aquí, en el servidor: cada ventana de acceso
-  // solo admite cuentas con ese rol. La pestaña del formulario no es
-  // decorativa —un docente no puede entrar por la ventana de estudiante.
   const roleResult = checkRoleAccess(expectedRole, user.role as Role);
   if (roleResult) return roleResult;
 
   await createSession({ id: user.id, role: user.role as Role });
   revalidatePath("/", "layout");
 
-  // El destino lo fija el servidor a partir del rol guardado, no el formulario.
+  // Retorna la ruta dinámica según el rol del usuario para disparar AuthSuccess en el cliente
   return { ok: true, redirectTo: homeFor({ role: user.role as Role }) };
 }
 

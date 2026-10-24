@@ -56,5 +56,6 @@ npm run db:studio
 ## Gotchas
 - Admin: no puede cambiar su propio rol ni eliminarse a sí mismo; debe quedar al menos un `DOCENTE`; la cuenta invitado no se puede borrar porque sostiene el acceso público.
 - Aprobar una inscripción recalcula el cupo desde las aprobadas; no guardar un número "ocupados".
+- `app/forgot-password/` es solo maqueta: la página no conecta su formulario ni tiene acción de servidor, envío de correo o tokens de restablecimiento. El enlace del login existe, pero la recuperación de contraseña no está implementada.
 - Las pruebas son suites Vitest puras (8 archivos, sin base de datos ni navegador): permisos, auth/contraseñas, filtros/búsqueda, validación, rate limit, semilleros y datos del seed. `tests/data.test.ts` importa `prisma/seed-data.ts`: mantén ese archivo libre de Prisma/IO y deja la escritura en `prisma/seed.ts`.
 - Todo el texto de la interfaz está en español. Seguir las convenciones de comentarios/codificación existentes y evitar tocar prototipos no relacionados.
